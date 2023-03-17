@@ -120,13 +120,13 @@ if __name__ == "__main__":
 			i.disconnect()
 		android.terminate()
 
-	init = ['US225']  # initialise the robot
+	init = ['US225']  # move until 25cm before 1st obstacle
 
 	case_l = [
 		# scan 1 = left
 		'FL057', 'FR057',
 		# move to 2nd obs
-		'US030',  # move until 30cm before 2nd obstacle
+		'US030',  # move until 30cm before 2nd obstacle and save d to buff 0
 		'FR020',
 	]
 
@@ -141,40 +141,40 @@ if __name__ == "__main__":
 	case_ll = [
 		# scan 2 = left
 		'BR020', 'FL067', 'FR067', 'FW025', 'FR090', 'FW060', 'FR090',
-		'RT070',  # d + 99
+		'RT070',  # d + 70
 		'FR090', 'FL090',
 		# back to base
-            'US120',
+        'US120', # move until 20cm before parking wall
 		'US120'  # move until 20cm before parking wall
 	]
 
 	case_lr = [
 		# scan 2 = right
 		'FR070', 'FW025', 'FL090', 'FW025', 'FL090', 'FW060', 'FL090',
-		'RT075',  # d + 99
+		'RT075',  # d + 75
 		'FL090', 'FR090',
 		# back to base
-            'US120',
+        'US120', # move until 20cm before parking wall
 		'US120'  # move until 20cm before parking wall
 	]
 
 	case_rr = [
 		# scan 2 = left
 		'BL020', 'FR067', 'FL067', 'FW025', 'FL090', 'FW060', 'FL090',
-		'RT070',  # d + 99
+		'RT070',  # d + 70
 		'FL090', 'FR090',
 		# back to base
-            'US120',
+        'US120', # move until 20cm before parking wall
 		'US120'  # move until 20cm before parking wall
 	]
 
 	case_rl = [
 		# scan 2 = right
 		'FL070', 'FW025', 'FR090', 'FW025', 'FR090', 'FW060', 'FR090',
-		'RT075',  # d + 99
+		'RT075',  # d + 75
 		'FR090', 'FL090',
 		# back to base
-            'US120',
+        'US120', # move until 20cm before parking wall
 		'US120'  # move until 20cm before parking wall
 	]
 
