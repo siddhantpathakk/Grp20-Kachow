@@ -1,0 +1,273 @@
+#include "ICM20948.h"
+#include <string.h>
+#include <stdio.h>
+
+ICM20948_ST_SENSOR_DATA gstGyroOffset = {0, 0, 0};
+
+HAL_StatusTypeDef ret; // to store return status
+int16_t val;           // data from IMU
+
+uint32_t heading = 0;
+uint32_t prevTick = 0;
+int32_t gyroPosOld[3];
+int32_t gyroNegOld[3];
+
+HAL_StatusTypeDef IMU_WriteOneByte(ICM20948 *dev, uint8_t reg, uint8_t data);
+HAL_StatusTypeDef IMU_ReadOneByte(ICM20948 *dev, uint8_t reg, uint8_t *data);
+
+int16_t gyro_offset[3] = {0};
+int32_t gyro_offset_f = 0;
+double heading_f = 0;
+/*
+ * INITIALISATION
+ */
+uint8_t *IMU_Initialise(ICM20948 *dev, I2C_HandleTypeDef *i2cHandle, UART_HandleTypeDef *uart)
+{
+
+    char hex[2];
+    uint8_t uartbuf[20] = "  IMU ID =      ";
+    uint8_t regData;
+
+    dev->i2cHandle = i2cHandle;
+    dev->uart = uart;
+
+    ret = IMU_WriteOneByte(dev, REG_ADD_REG_BANK_SEL, REG_VAL_REG_BANK_0);
+    if (ret != HAL_OK)
+    {
+        strcpy((char *)uartbuf, "Error 1\r\n");
+        return &uartbuf[0];
+    }
+
+    ret = IMU_ReadOneByte(dev, REG_WHO_AM_I, &regData);
+    if (ret != HAL_OK)
+    {
+        strcpy((char *)uartbuf, "Error 2\r\n");
+        return &uartbuf[0];
+    }
+    else
+    {
+        sprintf(hex, "%x", regData);   // change to hexidecimal
+        strcpy(uartbuf, hex);          // copy back to buf
+        uartbuf[12] = uartbuf[0] - 32; // change to upper case
+        uartbuf[13] = uartbuf[1] - 32;
+        uartbuf[14] = '\r';
+        uartbuf[15] = '\n';
+        uartbuf[16] = '\0';
+        uartbuf[0] = '\r';
+        uartbuf[1] = '\n';
+        uartbuf[2] = 'I';
+    }
+
+    HAL_UART_Transmit(dev->uart, uartbuf, strlen((char *)uartbuf), HAL_MAX_DELAY);
+
+    // Initialize
+    // Bank 0 - Reset the device and then auto selects the best available clock source
+    ret = IMU_WriteOneByte(dev, REG_ADD_REG_BANK_SEL, REG_VAL_REG_BANK_0);
+    if (ret != HAL_OK)
+    {
+        strcpy((char *)uartbuf, "Error 3\r\n");
+        return &uartbuf[0];
+    }
+    ret = IMU_WriteOneByte(dev, REG_ADD_PWR_MGMT_1, REG_VAL_ALL_RGE_RESET); // reset device - check header file value should be 0xF1
+    if (ret != HAL_OK)
+    {
+        strcpy((char *)uartbuf, "Error 4a\r\n");
+        return &uartbuf[0];
+    }
+    HAL_Delay(10);
+    ret = IMU_WriteOneByte(dev, REG_ADD_PWR_MGMT_1, REG_VAL_RUN_MODE); // auto selects the best available clock source for device
+    if (ret != HAL_OK)
+    {
+        strcpy((char *)uartbuf, "Error 4b\r\n");
+        return &uartbuf[0];
+    }
+
+    HAL_Delay(10);
+    ret = IMU_WriteOneByte(dev, REG_ADD_PWR_MGMT_2, REG_VAL_ACCEL_GYROLL_OFF); // OFF
+    if (ret != HAL_OK)
+    {
+        strcpy((char *)uartbuf, "Error 5a\r\n");
+        return &uartbuf[0];
+    }
+
+    HAL_Delay(10);
+    ret = IMU_WriteOneByte(dev, REG_ADD_PWR_MGMT_2, REG_VAL_ACCEL_GYROLL_ON); // ON
+    if (ret != HAL_OK)
+    {
+        strcpy((char *)uartbuf, "Error 5b\r\n");
+        return &uartbuf[0];
+    }
+
+    ret = IMU_WriteOneByte(dev, REG_ADD_INT_ENABLE_1, REG_VAL_INT_ENABLED); // Turn on inteerup on pin INT1
+
+    // Bank 2 - Gyro and Acce and start running
+    /* user bank 2 register */
+    ret = IMU_WriteOneByte(dev, REG_ADD_REG_BANK_SEL, REG_VAL_REG_BANK_2);
+    if (ret != HAL_OK)
+    {
+        strcpy((char *)uartbuf, "Error 6\r\n");
+        return &uartbuf[0];
+    }
+    ret = IMU_WriteOneByte(dev, REG_ADD_GYRO_SMPLRT_DIV, 0x04); // pg 59  Gyro sample rate divider Output data rate = 1.11K/7 = 157 Hz
+    if (ret != HAL_OK)
+    {
+        strcpy((char *)uartbuf, "Error 7\r\n");
+        return &uartbuf[0];
+    }
+    ret = IMU_WriteOneByte(dev, REG_ADD_GYRO_CONFIG_1, REG_VAL_BIT_GYRO_DLPCFG_6 | REG_VAL_BIT_GYRO_FS_500DPS | REG_VAL_BIT_GYRO_DLPF); // enable low pass filter and set Gyro FS
+    if (ret != HAL_OK)
+    {
+        strcpy((char *)uartbuf, "Error 8\r\n");
+        return &uartbuf[0];
+    }
+
+    ret = IMU_WriteOneByte(dev, REG_ADD_ACCEL_SMPLRT_DIV_2, 0x07); //  pg 63 Acce sample rate divider: ODR = 1.125KHz/7 = 161
+    ret = IMU_WriteOneByte(dev, REG_ADD_ACCEL_SMPLRT_DIV_1, 0x00); // upper 3 bit of sample rate = 0
+    if (ret != HAL_OK)
+    {
+        strcpy((char *)uartbuf, "Error 9\r\n");
+        return &uartbuf[0];
+    }
+
+    // enable LPF and set accel full scale to +/-2G, sensitivity scale factor = 16384 LSB/g
+    ret = IMU_WriteOneByte(dev, REG_ADD_ACCEL_CONFIG, REG_VAL_BIT_ACCEL_DLPCFG_6 | REG_VAL_BIT_ACCEL_FS_2g | REG_VAL_BIT_ACCEL_DLPF);
+    if (ret != HAL_OK)
+    {
+        strcpy((char *)uartbuf, "Error 10\r\n");
+        return &uartbuf[0];
+    }
+
+    IMU_WriteOneByte(dev, REG_ADD_TEMP_CONFIG, REG_VAL_TEMP_CONFIG); // Temp configuration pg 67
+
+    // back to bank 0
+    ret = IMU_WriteOneByte(dev, REG_ADD_REG_BANK_SEL, REG_VAL_REG_BANK_0);
+    if (ret != HAL_OK)
+    {
+        strcpy((char *)uartbuf, "Error 11\r\n");
+        return &uartbuf[0];
+    }
+    HAL_Delay(100);
+
+    /* offset */
+    gyroPosOld[0] = 0;
+    gyroPosOld[1] = 0;
+    gyroPosOld[2] = 0;
+
+    gyroNegOld[0] = 0;
+    gyroNegOld[1] = 0;
+    gyroNegOld[2] = 0;
+    return 0;
+}
+
+HAL_StatusTypeDef IMU_WriteOneByte(ICM20948 *dev, uint8_t reg, uint8_t data)
+{
+    uint8_t regData = data;
+    return HAL_I2C_Mem_Write(dev->i2cHandle, IMU_ADDR, reg, I2C_MEMADD_SIZE_8BIT, &regData, 1, HAL_MAX_DELAY);
+}
+
+HAL_StatusTypeDef IMU_ReadOneByte(ICM20948 *dev, uint8_t reg, uint8_t *data)
+{
+    ret = HAL_I2C_Mem_Read(dev->i2cHandle, IMU_ADDR, reg, I2C_MEMADD_SIZE_8BIT, data, I2C_MEMADD_SIZE_8BIT, HAL_MAX_DELAY);
+    return ret;
+}
+
+void IMU_GyroResetTick(ICM20948 *dev)
+{
+    IMU_GyroReadHeading(dev);
+}
+
+int32_t IMU_GyroReadHeading(ICM20948 *dev)
+{
+    // return the change in value instead of current value
+    uint8_t i, u8Buf[2] = {0}; // reset to zero
+    int32_t gyroRaw = {0};     // reset to zero
+    uint32_t gyroPos, gyroNeg;
+    uint32_t valPos, valNeg;
+    uint32_t elapsedMs, tick;
+    int32_t gyroSum = 0;
+    ret = IMU_ReadOneByte(dev, REG_ADD_GYRO_ZOUT_L, &u8Buf[0]);
+    ret = IMU_ReadOneByte(dev, REG_ADD_GYRO_ZOUT_H, &u8Buf[1]);
+    if (prevTick == 0)
+    {
+        prevTick = xTaskGetTickCount();
+        return 0;
+    }
+    tick = xTaskGetTickCount();
+    elapsedMs = tick - prevTick;
+    prevTick = tick;
+
+    gyroRaw = (u8Buf[1] << 8) | u8Buf[0] - gyro_offset[2];
+    if (gyroRaw < 0x8000)
+    {
+        gyroNeg = gyroRaw;
+        gyroPos = 0;
+    }
+    else
+    {
+        gyroNeg = 0;
+        gyroPos = 65535 - gyroRaw;
+    }
+
+    // Median Filtering
+    gyroNegOld[2] = gyroNegOld[1];
+    gyroPosOld[2] = gyroPosOld[1];
+
+    gyroNegOld[1] = gyroNegOld[0];
+    gyroPosOld[1] = gyroPosOld[0];
+
+    gyroNegOld[0] = gyroNeg;
+    gyroPosOld[0] = gyroPos;
+
+    if (gyroNegOld[1] <= gyroNegOld[0] && gyroNegOld[1] >= gyroNegOld[2])
+        valNeg = gyroNegOld[1];
+    else if (gyroNegOld[1] <= gyroNegOld[2] && gyroNegOld[1] >= gyroNegOld[0])
+        valNeg = gyroNegOld[1];
+
+    else if (gyroNegOld[0] <= gyroNegOld[2] && gyroNegOld[0] >= gyroNegOld[1])
+        valNeg = gyroNegOld[0];
+    else if (gyroNegOld[0] <= gyroNegOld[2] && gyroNegOld[0] >= gyroNegOld[1])
+        valNeg = gyroNegOld[0];
+
+    else if (gyroNegOld[2] <= gyroNegOld[0] && gyroNegOld[2] >= gyroNegOld[1])
+        valNeg = gyroNegOld[2];
+    else
+        valNeg = gyroNegOld[2];
+
+    if (gyroPosOld[1] <= gyroPosOld[0] && gyroPosOld[1] >= gyroPosOld[2])
+        valPos = gyroPosOld[1];
+    else if (gyroPosOld[1] <= gyroPosOld[2] && gyroPosOld[1] >= gyroPosOld[0])
+        valPos = gyroPosOld[1];
+
+    else if (gyroPosOld[0] <= gyroPosOld[2] && gyroPosOld[0] >= gyroPosOld[1])
+        valPos = gyroPosOld[0];
+    else if (gyroPosOld[0] <= gyroPosOld[2] && gyroPosOld[0] >= gyroPosOld[1])
+        valPos = gyroPosOld[0];
+
+    else if (gyroPosOld[2] <= gyroPosOld[0] && gyroPosOld[2] >= gyroPosOld[1])
+        valPos = gyroPosOld[2];
+    else
+        valPos = gyroPosOld[2];
+
+    dev->gyro[2] = ((double)((int32_t)valPos - (int32_t)valNeg - (int32_t)gyro_offset_f) * 0.01525878906f * elapsedMs / 1000);
+    return (int32_t)valPos - (int32_t)valNeg;
+}
+
+void Gyro_calibrateHeading(ICM20948 *dev, double ticks) // calibrate the offset of the gyro
+// store the offset in int16_t gyro_offset[3]
+{
+    int32_t offset_local = 0;
+    int16_t i;
+    for (i = 0; i < 512; i++)
+    {
+        IMU_GyroReadHeading(dev);
+        osDelayUntil(ticks); // wait for 10msec
+    }
+
+    for (i = 0; i < 2048; i++)
+    {
+        offset_local = offset_local + IMU_GyroReadHeading(dev);
+        osDelayUntil(ticks); // wait for 10msec
+    }
+
+    gyro_offset_f = offset_local >> 11;
+}
