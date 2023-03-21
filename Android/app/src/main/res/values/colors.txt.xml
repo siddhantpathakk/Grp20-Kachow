@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#C33332</color>
+    <color name="colorPrimaryDark">#32292f</color>
+    <color name="colorPrimaryGreen">#536657</color>
+    <color name="colorAccent">#5762D5</color>
+    <color name="border_color">#000000</color>
+    <color name="colorWhite">#FFFFFF</color>
+    <color name="colorRed">#FF0000</color>
+    <color name="colorBlack">#000000</color>
+    <color name="colorGrey">#757C88</color>
+    <color name="colorGold">#FCC201</color>
+    <color name="colorDarkBlue">#001B3A</color>
+    <color name="exploredColor">#FFF9FBE7</color>
+    <color name="colorTab">#6e7dab</color>
+    <color name="colorTabText">#FFFFFF</color>
+
+    <color name="defaultblue">#1338BE</color>
+    <color name="button_green">#009688</color>
+    <color name="button_orange">#FD4D3B</color>
+
+    <color name="colorPrimaryLight">#800080</color>
+    <color name="vivaldiRed">#ef3939</color>
+    <color name="royalGreen">#136207</color>
+    <color name="emeraldGreen">#046307</color>
+
+
+    <color name="blue_50">#E3F2FD</color>
+    <color name="blue_100">#BBDEFB</color>
+    <color name="blue_200">#90CAF9</color>
+    <color name="blue_300">#64B5F6</color>
+    <color name="blue_400">#42A5F5</color>
+    <color name="blue_500">#2196F3</color>
+    <color name="blue_600">#1E88E5</color>
+    <color name="blue_700">#1976D2</color>
+    <color name="blue_800">#1565C0</color>
+    <color name="blue_900">#0D47A1</color>
+    <color name="blue_A100">#82B1FF</color>
+    <color name="blue_A200">#448AFF</color>
+    <color name="blue_A400">#2979FF</color>
+    <color name="blue_A700">#2962FF</color>
+
+    <color name="pastel_red">#ff6961</color>
+    <color name="red_purple">#FF5733</color>
+
+    <color name="grey_50">#FAFAFA</color>
+    <color name="grey_100">#F5F5F5</color>
+    <color name="grey_200">#EEEEEE</color>
+    <color name="grey_300">#E0E0E0</color>
+    <color name="grey_400">#BDBDBD</color>
+    <color name="grey_500">#9E9E9E</color>
+    <color name="grey_600">#757575</color>
+    <color name="grey_700">#616161</color>
+    <color name="grey_800">#424242</color>
+    <color name="grey_900">#212121</color>
+
+    //THEMES COLOURS
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+</resources>

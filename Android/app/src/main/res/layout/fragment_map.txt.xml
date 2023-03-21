@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/color"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:layout_editor_absoluteX="0dp"
+    tools:layout_editor_absoluteY="12dp">
+
+    <!-- Created 4 buttons for fragment_map.xml (start) -->
+
+    <!-- End -->
+
+
+
+    <LinearLayout
+        android:id="@+id/mapEditButtonsLinearLayout"
+        android:background="@drawable/rounded_corner_grey"
+        android:layout_width="250dp"
+        android:layout_marginStart="35dp"
+        android:layout_marginTop="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@id/prefixObstacle"
+        android:gravity="center"
+        android:layout_height="200dp">
+<!--     app:layout_constraintTop_toBottomOf="@id/sendObstacleBtn"-->
+        <ToggleButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/exploredImageBtn"
+            android:drawableStart="@drawable/explore_selector"
+            android:textOn="  Off Explore Cell Edit"
+            android:textOff="  Set Cell to Explored"
+            android:textSize="12sp"
+            android:textColor="@color/colorPrimary"
+            />
+        <ToggleButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/clearImageBtn"
+            android:drawableStart="@drawable/unexplore_selector"
+            android:textOn="  Off Default Cell Edit"
+            android:textOff="  Set Cell to Default"
+            android:textSize="12sp"
+            android:textColor="@color/colorPrimary"
+            />
+
+        <ToggleButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/obstacleImageBtn"
+            android:drawableStart="@drawable/obstacle_selector"
+            android:textOn="  Off Obstacle Edit"
+            android:textSize="12sp"
+            android:textOff="  Set Obstacle to Cell"
+            android:textColor="@color/colorPrimary"
+            />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/directionChangeImageBtn"
+            android:drawableStart="@drawable/direction_selector"
+            android:text="  Change Robot Direction"
+            android:textColor="@color/colorPrimary"
+            android:layout_centerHorizontal="true"
+            android:textSize="12sp"
+            app:srcCompat="@drawable/ic_direction_off"
+            />
+    </LinearLayout>
+
+    <RelativeLayout
+        android:background="@drawable/rounded_corner_grey"
+        android:padding="10dp"
+        android:layout_width="250dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="10dp"
+        app:layout_constraintStart_toEndOf="@+id/mapEditButtonsLinearLayout"
+        app:layout_constraintTop_toBottomOf="@id/prefixObstacle"
+        android:layout_height="200dp">
+
+<!--        <Switch-->
+<!--            android:id="@+id/manualAutoToggleBtn"-->
+<!--            android:layout_width="200dp"-->
+<!--            android:layout_height="30dp"-->
+<!--            android:layout_marginStart="16dp"-->
+<!--            android:layout_marginTop="1dp"-->
+<!--            android:layout_marginBottom="16dp"-->
+<!--            android:paddingRight="150dp"-->
+<!--            android:switchPadding="-220dp"-->
+<!--            android:text="MANUAL"-->
+<!--            android:textAlignment="center"-->
+<!--            android:textOff="@string/manual"-->
+<!--            android:textOn="@string/auto"-->
+<!--            android:textSize="24sp"-->
+<!--            android:textStyle="bold" />-->
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_marginTop="5dp"
+
+            android:text="Obstacle Direction: "
+            android:textColor="@color/black"
+            android:textStyle="bold"/>
+
+        <ToggleButton
+            android:id="@+id/obstacleFaceLeftBtn"
+            android:drawableStart="@drawable/west_selector"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:textOff="@null"
+            android:textOn="@null"
+            android:text=""
+            android:scaleType="fitCenter"
+            android:textSize="0dp"
+            android:textColor="@color/colorPrimary"
+            android:layout_toLeftOf="@id/obstacleFaceBtmBtn"
+            android:layout_below="@id/obstacleFaceTopBtn"
+            />
+
+        <ToggleButton
+            android:id="@+id/obstacleFaceTopBtn"
+            android:drawableStart="@drawable/north_selector"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:textOff="@null"
+            android:textOn="@null"
+            android:text=""
+            android:textSize="0dp"
+            android:layout_centerHorizontal="true"
+            android:textColor="@color/colorPrimary"
+            android:layout_below="@id/textView"
+            />
+
+
+        <ToggleButton
+            android:id="@+id/obstacleFaceBtmBtn"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="-1dp"
+            android:drawableStart="@drawable/south_selector"
+            android:text=""
+            android:textColor="@color/colorPrimary"
+            android:textOff="@null"
+            android:textOn="@null"
+            android:layout_below="@id/obstacleFaceTopBtn"
+            android:layout_centerHorizontal="true"
+            android:textSize="0dp" />
+
+        <ToggleButton
+            android:id="@+id/obstacleFaceRightBtn"
+            android:drawableStart="@drawable/east_selector"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:textOff="@null"
+            android:textOn="@null"
+            android:text=""
+            android:scaleType="fitCenter"
+            android:textSize="0dp"
+            android:textColor="@color/colorPrimary"
+            android:layout_toRightOf="@id/obstacleFaceBtmBtn"
+            android:layout_below="@id/obstacleFaceTopBtn"
+            />
+
+    </RelativeLayout>
+
+
+    <ToggleButton
+        android:id="@+id/setStartPointToggleBtn"
+        android:layout_width="170dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:textAlignment="center"
+        android:textOff="set start"
+        android:background="#AA0A00"
+        android:textOn="CANCEL"
+        android:textSize="18sp"
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.035"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ToggleButton
+        android:id="@+id/setWaypointToggleBtn"
+        android:layout_width="170dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="28dp"
+        android:background="@drawable/positivebtn"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textOff="SET WAYPOINT"
+        android:textOn="CANCEL"
+        android:textSize="18sp"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/setStartPointToggleBtn"
+        app:layout_constraintVertical_bias="0.396" />
+
+    <Button
+        android:id="@+id/resetMapBtn"
+        android:layout_width="170dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="10dp"
+        android:background="#E7A17E"
+        android:text="Clear Map"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintHorizontal_bias="0.482"
+        app:layout_constraintTop_toTopOf="parent" />
+
+<!--    <Button-->
+<!--        android:id="@+id/updateButton"-->
+<!--        android:layout_width="200dp"-->
+<!--        android:layout_height="40dp"-->
+<!--        android:layout_marginTop="10dp"-->
+<!--        android:background="@color/colorPrimaryGreen"-->
+<!--        android:clickable="true"-->
+<!--        android:text="UPDATE"-->
+<!--        android:textAlignment="center"-->
+<!--        android:textColor="@color/white"-->
+<!--        android:textSize="20sp"-->
+<!--        android:textStyle="bold"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintHorizontal_bias="0.96"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toTopOf="parent" />-->
+
+    <Button
+        android:id="@+id/savePrefixObstacle"
+        android:layout_width="170dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:backgroundTint="#EB8B25"
+        android:paddingHorizontal="20dp"
+        android:text="Save Obstacle"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.035"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/setStartPointToggleBtn" />
+
+    <Button
+        android:id="@+id/loadObstacle"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:backgroundTint="#F4B900"
+        android:text="Load Saved Obstacle"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.962"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/resetMapBtn" />
+
+    <Button
+        android:id="@+id/prefixObstacle"
+        android:layout_width="170dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:backgroundTint="@color/colorRed"
+        android:paddingHorizontal="20dp"
+        android:text="Prefix Obstacle"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.482"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/resetMapBtn" />
+
+    <Button
+        android:id="@+id/sendObstacleBtn"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:backgroundTint="@color/red_purple"
+        android:text="Send Obstacle Detail"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintHorizontal_bias="0.96"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
