@@ -1,0 +1,434 @@
+# -*- coding: utf-8 -*-
+"""MDP Image Recognition
+
+"""# Training a YoloV5 (using Transfer Learning)
+
+## Install libraries
+"""
+
+!pip install roboflow
+
+!nvidia-smi
+
+# Commented out IPython magic to ensure Python compatibility.
+import matplotlib.pyplot as plt
+import cv2
+from roboflow import Roboflow
+
+!git clone https://github.com/ultralytics/yolov5.git
+# %cd yolov5/
+!pip install -r requirements.txt
+
+"""## Import dataset from Roboflow"""
+
+# 14k train; 1.5k val; 949 test
+rf = Roboflow(api_key="XXXXXXXXX")
+project = rf.workspace("XXXXXX").project("XXXXXX")
+dataset = project.version(XXX).download("yolov5")
+
+# define number of classes based on YAML
+import yaml
+with open(dataset.location + "/data.yaml", 'r') as stream:
+    num_classes = str(yaml.safe_load(stream)['nc'])
+
+print(num_classes)
+print(dataset.location)
+
+# my own dataset
+# from roboflow import Roboflow
+# rf = Roboflow(api_key="EBT7P7XxA8HcrUAAyKvP")
+# project = rf.workspace("siddhant-pathak-ezzg6").project("mdp-f0fm6")
+# dataset = project.version(15).download("yolov5")
+
+"""## Edit the configuration yaml file"""
+
+# Commented out IPython magic to ensure Python compatibility.
+#customize iPython writefile so we can write variables
+from IPython.core.magic import register_line_cell_magic
+
+@register_line_cell_magic
+def writetemplate(line, cell):
+    with open(line, 'w') as f:
+        f.write(cell.format(**globals()))
+
+#this is the model configuration we will use 
+# %cat /content/yolov5/models/yolov5s.yaml
+
+
+
+# # YOLOv5 🚀 by Ultralytics, GPL-3.0 license
+
+# # Parameters
+# nc: {num_classes}  # number of classes
+# depth_multiple: 0.67  # model depth multiple
+# width_multiple: 0.75  # layer channel multiple
+# anchors:
+#   - [19,27,  44,40,  38,94]  # P3/8
+#   - [96,68,  86,152,  180,137]  # P4/16
+#   - [140,301,  303,264,  238,542]  # P5/32
+#   - [436,615,  739,380,  925,792]  # P6/64
+
+# # YOLOv5 v6.0 backbone
+# backbone:
+#   # [from, number, module, args]
+#   [[-1, 1, Conv, [64, 6, 2, 2]],  # 0-P1/2
+#    [-1, 1, Conv, [128, 3, 2]],  # 1-P2/4
+#    [-1, 3, C3, [128]],
+#    [-1, 1, Conv, [256, 3, 2]],  # 3-P3/8
+#    [-1, 6, C3, [256]],
+#    [-1, 1, Conv, [512, 3, 2]],  # 5-P4/16
+#    [-1, 9, C3, [512]],
+#    [-1, 1, Conv, [768, 3, 2]],  # 7-P5/32
+#    [-1, 3, C3, [768]],
+#    [-1, 1, Conv, [1024, 3, 2]],  # 9-P6/64
+#    [-1, 3, C3, [1024]],
+#    [-1, 1, SPPF, [1024, 5]],  # 11
+#   ]
+
+# # YOLOv5 v6.0 head
+# head:
+#   [[-1, 1, Conv, [768, 1, 1]],
+#    [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+#    [[-1, 8], 1, Concat, [1]],  # cat backbone P5
+#    [-1, 3, C3, [768, False]],  # 15
+
+#    [-1, 1, Conv, [512, 1, 1]],
+#    [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+#    [[-1, 6], 1, Concat, [1]],  # cat backbone P4
+#    [-1, 3, C3, [512, False]],  # 19
+
+#    [-1, 1, Conv, [256, 1, 1]],
+#    [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+#    [[-1, 4], 1, Concat, [1]],  # cat backbone P3
+#    [-1, 3, C3, [256, False]],  # 23 (P3/8-small)
+
+#    [-1, 1, Conv, [256, 3, 2]],
+#    [[-1, 20], 1, Concat, [1]],  # cat head P4
+#    [-1, 3, C3, [512, False]],  # 26 (P4/16-medium)
+
+#    [-1, 1, Conv, [512, 3, 2]],
+#    [[-1, 16], 1, Concat, [1]],  # cat head P5
+#    [-1, 3, C3, [768, False]],  # 29 (P5/32-large)
+
+#    [-1, 1, Conv, [768, 3, 2]],
+#    [[-1, 12], 1, Concat, [1]],  # cat head P6
+#    [-1, 3, C3, [1024, False]],  # 32 (P6/64-xlarge)
+
+#    [[23, 26, 29, 32], 1, Detect, [nc, anchors]],  # Detect(P3, P4, P5, P6)
+#   ]
+
+"""### yolov5l.yaml"""
+
+# %%writetemplate /content/yolov5/models/custom_yolov5s.yaml
+# # YOLOv5 🚀 by Ultralytics, GPL-3.0 license
+
+# # Parameters
+# nc: {num_classes}  # number of classes
+# depth_multiple: 1.0  # model depth multiple
+# width_multiple: 1.0  # layer channel multiple
+# anchors:
+#   - [10,13, 16,30, 33,23]  # P3/8
+#   - [30,61, 62,45, 59,119]  # P4/16
+#   - [116,90, 156,198, 373,326]  # P5/32
+
+# # YOLOv5 v6.0 backbone
+# backbone:
+#   # [from, number, module, args]
+#   [[-1, 1, Conv, [64, 6, 2, 2]],  # 0-P1/2
+#    [-1, 1, Conv, [128, 3, 2]],  # 1-P2/4
+#    [-1, 3, C3, [128]],
+#    [-1, 1, Conv, [256, 3, 2]],  # 3-P3/8
+#    [-1, 6, C3, [256]],
+#    [-1, 1, Conv, [512, 3, 2]],  # 5-P4/16
+#    [-1, 9, C3, [512]],
+#    [-1, 1, Conv, [1024, 3, 2]],  # 7-P5/32
+#    [-1, 3, C3, [1024]],
+#    [-1, 1, SPPF, [1024, 5]],  # 9
+#   ]
+
+# # YOLOv5 v6.0 head
+# head:
+#   [[-1, 1, Conv, [512, 1, 1]],
+#    [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+#    [[-1, 6], 1, Concat, [1]],  # cat backbone P4
+#    [-1, 3, C3, [512, False]],  # 13
+
+#    [-1, 1, Conv, [256, 1, 1]],
+#    [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+#    [[-1, 4], 1, Concat, [1]],  # cat backbone P3
+#    [-1, 3, C3, [256, False]],  # 17 (P3/8-small)
+
+#    [-1, 1, Conv, [256, 3, 2]],
+#    [[-1, 14], 1, Concat, [1]],  # cat head P4
+#    [-1, 3, C3, [512, False]],  # 20 (P4/16-medium)
+
+#    [-1, 1, Conv, [512, 3, 2]],
+#    [[-1, 10], 1, Concat, [1]],  # cat head P5
+#    [-1, 3, C3, [1024, False]],  # 23 (P5/32-large)
+
+#    [[17, 20, 23], 1, Detect, [nc, anchors]],  # Detect(P3, P4, P5)
+#   ]
+
+"""## Train"""
+
+# Commented out IPython magic to ensure Python compatibility.
+# %%time
+# !python train.py --data {dataset.location}/data.yaml --weights yolov5l.pt --epochs 75 --batch-size 16 --name 'yolov5-XXL' --freeze 10 --cfg '/content/yolov5/models/custom_yolov5s.yaml'
+
+# Commented out IPython magic to ensure Python compatibility.
+# %ls runs/train/yolov5-XXL/weights
+
+"""## View Loggers - Tensorboard and result graphs"""
+
+# from utils.plots import plot_results  # plot results.txt as results.png
+from PIL import Image      
+Image.open('/content/yolov5/runs/train/yolov5-XXL/results.png')  # view results.png
+
+# Commented out IPython magic to ensure Python compatibility.
+# %reload_ext tensorboard
+# %tensorboard --logdir runs/train
+
+"""## Detection"""
+
+# Commented out IPython magic to ensure Python compatibility.
+# use the best weights
+# %cd /content/yolov5/
+!python detect.py --weights runs/train/yolov5-XXL/weights/best.pt --img 416 --conf 0.2 --source '/content/yolov5/cz3004-2/test/images'
+
+"""## Save the files in a zipped format"""
+
+# Save the files
+from google.colab import files
+!zip -r /content/yolov5.zip /content/yolov5
+files.download('/content/yolov5.zip')
+
+"""## Using Torch API call"""
+
+import torch
+import numpy as np
+import cv2
+
+model = torch.hub.load('ultralytics/yolov5', 'custom', path='/content/yolov5/runs/train/yolov5-XXL/weights/best.pt', verbose=False, force_reload=True,)
+model.verbose=False
+img = '/content/IMG_0114.JPG'
+
+# Commented out IPython magic to ensure Python compatibility.
+print("\n\nOriginal Image")
+image = Image.open(img)
+# %matplotlib inline
+plt.imshow(np.squeeze(image))
+plt.show()
+
+# Commented out IPython magic to ensure Python compatibility.
+print("\n\nResized Image")
+image = image.resize((640, 640)) # resized to 640x640
+# %matplotlib inline
+plt.imshow(np.squeeze(image))
+plt.show()
+print(f"Resized to : {image.size}")
+
+# Commented out IPython magic to ensure Python compatibility.
+print("\n\nRotated and Resized Image")
+#rotate image
+angle = 90
+image = image.rotate(angle)
+# %matplotlib inline
+plt.imshow(np.squeeze(image))
+plt.show()
+
+data = np.asarray(image)
+results = model(data, size=640)
+
+help(results)
+
+lst=[]
+df = results.pandas().xyxy[0]
+print(df)
+for i in df['name']: 
+    lst.append(i)
+
+# Commented out IPython magic to ensure Python compatibility.
+# image_score = results.render()
+
+print("\n\nResult Image")
+# %matplotlib inline
+plt.imshow(np.squeeze(results.render()))
+plt.show()
+
+# crops = results.crop(save=False)
+# print("\n\nCropped Image")
+# print("\n", crops)
+# # %matplotlib inline
+# # plt.imshow(crops)
+# # plt.show()
+
+# cv2.imwrite("/content/outputs_yolov5/output-"+str(lst[0])+".png", image_score)
+print("\n\nLabel:\t",int(lst[0]))
+
+"""### Modularity based implementation of YOLOv5"""
+
+import torch
+import numpy as np
+import cv2
+from PIL import Image
+import matplotlib.pyplot as plt
+
+desc_dict={"11":"one","12":"two","13":"three","14":"four","15":"five",
+           "16":"six","17":"seven","18":"eight","19":"nine",
+           "20":"Alphabet A","21":"Alphabet B","22":"Alphabet C",
+           "23":"Alphabet D","24":"Alphabet E","25":"Alphabet F",
+           "26":"Alphabet G","27":"Alphabet H","28":"Alphabet S",
+           "29":"Alphabet T","30":"Alphabet U","31":"Alphabet V",
+           "32":"Alphabet W","33":"Alphabet X","34":"Alphabet Y","35":"Alphabet Z",
+           "36":"Up arrow","37":"down arrow","38":"right arrow",
+           "39":"left arrow","40":"Stop","0":"bulls-eye"
+           }
+
+# import argparse
+#write a function for argument parser
+# def parse_args():
+#   return
+
+def load_model():
+  model = torch.hub.load('ultralytics/yolov5', 'custom', 
+                         path='/content/yolov5/runs/train/yolov5-XXL/weights/best.pt', 
+                         verbose=False,
+                         force_reload=True)
+  return model
+
+# Commented out IPython magic to ensure Python compatibility.
+def load_image(img_path, rotate=False, debug=False):
+  original_image = Image.open(img_path)
+
+  resized_image = original_image.resize((640, 640))
+
+  #add logic to rotate only when original_image.shape[0]<original_image.shape[1]
+  if rotate==True:
+    angle = -90
+    resized_and_rotated_image = resized_image.rotate(angle)
+  else:
+    angle=0
+    resized_and_rotated_image = resized_image
+
+  if debug==True:
+    print("\n\nOriginal Image")
+#     %matplotlib inline
+    plt.imshow(np.squeeze(original_image))
+    plt.show()
+    
+    print("\n\nResized Image")
+    print(f"Original size \t: {original_image.size}")
+    print(f"Resized to \t: {resized_image.size}")
+#     %matplotlib inline
+    plt.imshow(np.squeeze(resized_image))
+    plt.show()
+    cv2.imwrite("resized_image.jpg", resized_image)
+
+    print("\n\nRotated and Resized Image")
+    print("The image is being rotated counterclockwise by", str(angle))
+#     %matplotlib inline
+    plt.imshow(np.squeeze(resized_and_rotated_image))
+    plt.show()
+    cv2.imwrite("resized_and_rotated_image.jpg", resized_and_rotated_image)
+
+  return np.asarray(resized_and_rotated_image)
+
+# Commented out IPython magic to ensure Python compatibility.
+def run_inference(model, fixed_image, class_dictionary=desc_dict, debug=False):
+
+  results = model(fixed_image)
+  lst_id, lst_conf = [],[]
+  df = results.pandas().xyxy[0]
+  for i in df['name']: 
+    lst_id.append(i)
+  for j in df['confidence']: 
+    lst_conf.append(j)
+
+  if len(lst_id)>1 or len(lst_conf)>1: #multiple identified
+    #find the biggest area
+    # print("(note: multiple objects were identified \ndifferentiating on the basis of area...)")
+    # print("the following were identified:\n")
+    # print(df)
+    df['area'] = (df['xmax']-df['xmin']) * (df['ymax']-df['ymin'])
+    col='area'
+    max_area_item = df.loc[df[col].idxmax()]
+    lst_id, lst_conf =[],[]
+    lst_id.append(max_area_item['name'])
+    lst_conf.append(max_area_item['confidence'])
+
+  try:
+    cid = int(lst_id[0])
+    conf = round(lst_conf[0]*100, 2)
+    cid_desc = class_dictionary[str(cid)]
+
+    if debug==True:
+      print(df)
+      print("\n\nLabel found :\t",cid)
+      print("Confidence :\t", conf, "%")
+      print("Checking the description from dictionary, if applicable..")
+      print(class_dictionary.get(str(cid), "Not found. Please check the image"))
+
+      print("\n\nResult Image")
+#       %matplotlib inline
+      plt.imshow(np.squeeze(results.render()))
+      # plt.xlim(0.5,1.5)
+      # plt.ylim(0.5,1.5)
+      plt.show()
+
+    return cid, cid_desc, conf
+
+  except:
+    print("Unable to find object. Something's wrong")
+    return None, None, None
+
+"""### Testing all functions out with the debug mode"""
+
+
+
+# Commented out IPython magic to ensure Python compatibility.
+# %%time
+# _model = load_model()
+# _img = load_image(img_path = '/content/IMG_3540.JPG',rotate=False, debug=False)
+# _cid, _desc, _conf = run_inference(model = _model, 
+#                                    fixed_image = _img,
+#                                    debug=False)
+# print(_cid)
+# print(_desc)
+# print(_conf)
+
+PATH_TO_WT = '/content/yolov5/runs/train/yolov5_TL5/weights/best.pt'
+YOLO_model = load_model(weights_pt = PATH_TO_WT)
+
+# Commented out IPython magic to ensure Python compatibility.
+# %%time
+# PATH_TO_IMG = '/content/IMG_6472.JPG'
+# 
+# image = load_image(img_path = PATH_TO_IMG, rotate=True)
+# cid, description, conf = run_inference(model=YOLO_model, fixed_image=image)
+# # if cid is not None:
+# #   print("cid")
+
+print("---"*15)
+print("Image inference using custom YOLOv5 done! \n\nHere are the results..")
+print("1.) Image ID\t:", cid)
+print("2.) Description\t:", description)
+print("3.) Probability\t:", conf,"%")
+
+"""# Save the weights and important files to Drive"""
+
+from google.colab import drive
+drive.mount('/content/gdrive')
+
+# Commented out IPython magic to ensure Python compatibility.
+# %cp /content/runs/detect/train/* /content/gdrive/My\ Drive/yolov8_mdo
+
+# Commented out IPython magic to ensure Python compatibility.
+# %cp /content/runs/detect/train/weights/best.pt /content/gdrive/My\ Drive/yolov8_mdp
+# %cp /content/runs/detect/train/weights/last.pt /content/gdrive/My\ Drive/yolov8_mdp
+
+"""# Save the files in a zipped format"""
+
+# Save the files
+from google.colab import files
+!zip -r /content/yolov5.zip /content/yolov5
+files.download('/content/yolov5.zip')
